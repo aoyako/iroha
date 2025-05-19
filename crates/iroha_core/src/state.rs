@@ -221,7 +221,7 @@ pub struct State {
     /// Reference to Kura subsystem.
     #[serde(skip)]
     kura: Arc<Kura>,
-    /// Handle to the [`LiveQueryStore`].
+    /// Handle to the [`LiveQueryStore`](crate::query::store::LiveQueryStore).
     #[serde(skip)]
     pub query_handle: LiveQueryStoreHandle,
     /// State telemetry
@@ -251,7 +251,7 @@ pub struct StateBlock<'state> {
 
     /// Reference to Kura subsystem.
     kura: &'state Kura,
-    /// Handle to the [`LiveQueryStore`].
+    /// Handle to the [`LiveQueryStore`](crate::query::store::LiveQueryStore).
     pub query_handle: &'state LiveQueryStoreHandle,
     /// State telemetry
     #[cfg(feature = "telemetry")]
@@ -277,7 +277,7 @@ pub struct StateTransaction<'block, 'state> {
 
     /// Reference to Kura subsystem.
     kura: &'state Kura,
-    /// Handle to the [`LiveQueryStore`].
+    /// Handle to the [`LiveQueryStore`](crate::query::store::LiveQueryStore).
     pub query_handle: &'state LiveQueryStoreHandle,
     /// State telemetry
     #[cfg(feature = "telemetry")]
@@ -303,7 +303,7 @@ pub struct StateView<'state> {
 
     /// Reference to Kura subsystem.
     kura: &'state Kura,
-    /// Handle to the [`LiveQueryStore`].
+    /// Handle to the [`LiveQueryStore`](crate::query::store::LiveQueryStore).
     pub query_handle: &'state LiveQueryStoreHandle,
     /// State telemetry
     #[cfg(feature = "telemetry")]
@@ -612,7 +612,7 @@ pub trait WorldReadOnly {
     ) -> bool {
         self.account_permissions()
             .get(account)
-            .map_or(false, |permissions| permissions.contains(token))
+            .is_some_and(|permissions| permissions.contains(token))
     }
 
     // Asset-related methods
@@ -628,7 +628,7 @@ pub trait WorldReadOnly {
 
         self.assets()
             .get(id)
-            .ok_or_else(|| QueryExecutionFail::from(FindError::Asset(id.clone())))
+            .ok_or_else(|| QueryExecutionFail::from(FindError::Asset(id.clone().into())))
             .cloned()
     }
 
@@ -891,7 +891,7 @@ impl WorldTransaction<'_, '_> {
     pub fn remove_account_permission(&mut self, account: &AccountId, token: &Permission) -> bool {
         self.account_permissions
             .get_mut(account)
-            .map_or(false, |permissions| permissions.remove(token))
+            .is_some_and(|permissions| permissions.remove(token))
     }
 
     /// Remove all [`Role`]s from the [`Account`]
@@ -915,7 +915,7 @@ impl WorldTransaction<'_, '_> {
         let _ = self.account(&id.account)?;
         self.assets
             .get_mut(id)
-            .ok_or_else(|| FindError::Asset(id.clone()))
+            .ok_or_else(|| FindError::Asset(id.clone().into()))
     }
 
     /// Get asset or inserts new with `default_asset_value`.
@@ -1092,11 +1092,8 @@ impl WorldTransaction<'_, '_> {
         events_buffer: &mut TransactionEventBuffer<'_>,
         world_events: I,
     ) {
-        let data_events: SmallVec<[DataEvent; 3]> = world_events
-            .into_iter()
-            .map(Into::into)
-            .map(Into::into)
-            .collect();
+        let data_events: SmallVec<[DataEvent; 3]> =
+            world_events.into_iter().map(Into::into).collect();
 
         for event in data_events.iter() {
             triggers.handle_data_event(event.clone());
@@ -1235,7 +1232,7 @@ impl State {
         }
     }
 
-    /// Create point in time view of [`WorldState`]
+    /// Create point in time view of [`State`]
     pub fn view(&self) -> StateView<'_> {
         let _view_lock = self.view_lock.read();
         StateView {

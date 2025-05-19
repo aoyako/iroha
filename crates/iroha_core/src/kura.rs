@@ -1,6 +1,6 @@
 //! Translates to warehouse. File-system and persistence-related
 //! logic.  [`Kura`] is the main entity which should be used to store
-//! new [`Block`](`crate::block::SignedBlock`)s on the
+//! new [`Block`](iroha_data_model::block::SignedBlock)s on the
 //! blockchain.
 use std::{
     fmt::Debug,
@@ -315,7 +315,7 @@ impl Kura {
         let block_index = block_height.get() - 1;
         if let Some(block_arc) = data_array_guard[block_index].1.as_ref() {
             return Some(Arc::clone(block_arc));
-        };
+        }
 
         let block_store = self.block_store.lock();
         let BlockIndex { start, length } = block_store
