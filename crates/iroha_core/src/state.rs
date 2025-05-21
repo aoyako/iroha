@@ -1569,6 +1569,8 @@ impl StateTransaction<'_, '_> {
 
             (action.authority().clone(), action.executable().clone())
         };
+
+        info!("TRIGGER EXECUTION ...");
         self.world.external_event_buf.push(event.clone().into());
         self.execute_trigger(id, &authority, &executable, event.into())?;
         self.world.triggers.decrease_repeats([id].into_iter());
@@ -1647,6 +1649,7 @@ impl StateTransaction<'_, '_> {
         executable: &ExecutableRef,
         event: EventBox,
     ) -> Result<(), TransactionRejectionReason> {
+        info!("TRIGGER EXECUTION OF {executable:?}");
         let res = match executable {
             ExecutableRef::Instructions(instructions) => self
                 .execute_instructions(instructions.iter().cloned(), authority)

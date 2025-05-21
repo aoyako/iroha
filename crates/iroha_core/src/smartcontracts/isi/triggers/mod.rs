@@ -269,13 +269,14 @@ pub mod isi {
             state_transaction: &mut StateTransaction<'_, '_>,
         ) -> Result<(), Error> {
             let id = &self.trigger;
-
+            
             let event = ExecuteTriggerEvent {
                 trigger_id: id.clone(),
                 authority: authority.clone(),
                 args: self.args,
             };
-
+            info!("TRIGGER EXECUTION {id} CAUSED BY {event:?}");
+            
             state_transaction
                 .world
                 .triggers
@@ -305,6 +306,7 @@ pub mod isi {
                 // Workaround until #5147: avoid circular error dependencies.
                 .map_err(|err| Error::InvariantViolation(err.to_string()))?;
 
+            info!("TRIGGER EXECUTION FINISHED");
             Ok(())
         }
     }
